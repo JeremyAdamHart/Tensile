@@ -43,6 +43,7 @@ hipError_t hipHccModuleLaunchKernel(hipFunction_t f, uint32_t globalWorkSizeX,
 #include <Tensile/EmbeddedData.hpp>
 #include <Tensile/hip/HipSolutionAdapter.hpp>
 #include <Tensile/hip/HipUtils.hpp>
+#include <chrono>
 
 namespace Tensile
 {
@@ -77,7 +78,11 @@ namespace Tensile
             hipModule_t module;
             try
             {
+                time_point<system_clock> startTime = system_clock::now();
                 auto error = hipModuleLoad(&module, path.c_str());
+                time_point<system_clock> endTime = system_clock::now();
+                duration<float> difference = endTime - startTime;
+                std::cout << "hipModuleLoad() took " << difference.count() << " seconds" << std::endl;
 
                 if(error == hipErrorFileNotFound)
                 {
