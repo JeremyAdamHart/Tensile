@@ -78,6 +78,9 @@ namespace Tensile
             hipModule_t module;
             try
             {
+                using namespace std;
+                using namespace chrono;
+                
                 time_point<system_clock> startTime = system_clock::now();
                 auto error = hipModuleLoad(&module, path.c_str());
                 time_point<system_clock> endTime = system_clock::now();
