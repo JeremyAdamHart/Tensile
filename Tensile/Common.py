@@ -665,6 +665,7 @@ validParameters = {
     "AssertSizeEqual":       -1,
     "AssertSizeGreaterThan": -1,
     "AssertSizeLessThan":    -1,
+    "AssertSizeMultiple":    -1,
 
     # Generate code inside kernel to check Assertions on Tensor dimensions
     "CheckTensorDimAsserts":               [False, True],
@@ -1112,6 +1113,7 @@ defaultBenchmarkCommonParameters = [
     {"AssertStrideDEqual":        [ {} ] },
     {"AssertSizeEqual":           [ {} ] },
     {"AssertSizeGreaterThan":     [ {} ] },
+    {"AssertSizeMultiple":        [ {} ] },
     {"AssertSizeLessThan":        [ {} ] },
     {"CheckTensorDimAsserts"      : [ False ] },
     {"CheckDimOverflow"           : [ 0 ] },
