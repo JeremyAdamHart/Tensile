@@ -32,7 +32,7 @@ from .Utils import roundUpToNearestMultiple
 from .KernelWriterBetaOnly import KernelWriterBetaOnly
 from .KernelWriterConversion import KernelWriterConversion
 
-from .ReplacementKernels import isCustomKernelConfig
+from .CustomKernels import isCustomKernelConfig
 
 from collections import namedtuple,OrderedDict
 from copy import deepcopy
@@ -2979,7 +2979,6 @@ class Solution:
         else:
           reject(state, "No valid DepthU found")
           return
-   
     ########################################
     # end DepthU loop
     ########################################
@@ -3608,7 +3607,7 @@ class Solution:
   @staticmethod
   def getMinNaming(objs):
     nonCKObjs = [obj for obj in objs if not isCustomKernelConfig(obj)]
-    
+
     # early return
     if len(nonCKObjs) == 0:
       return {}

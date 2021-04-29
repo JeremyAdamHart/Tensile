@@ -11,13 +11,13 @@
 // Component.Signature.SignatureCOV3
 .amdgcn_target "amdgcn-amd-amdhsa--gfx900"
 .text
-.protected AtomicCTest
-.globl AtomicCTest
+.protected TestKernel
+.globl TestKernel
 .p2align 8
-.type AtomicCTest,@function
+.type TestKernel,@function
 .section .rodata,#alloc
 .p2align 6
-.amdhsa_kernel AtomicCTest
+.amdhsa_kernel TestKernel
   .amdhsa_user_sgpr_kernarg_segment_ptr 1
   .amdhsa_next_free_vgpr 115 // vgprs
   .amdhsa_next_free_sgpr 102 // sgprs
@@ -50,18 +50,12 @@ custom.config:
     TransposeB: False
     UseBeta: True
     Batched: True
-    LdcEqualsLdd: True
   LoopDoWhile: False
   WorkGroupMapping:  1
   ThreadTile: [ 8, 8 ]
   WorkGroup: [  8, 16,  1 ]
   DepthU: 8
   VectorWidth: 4
-  AssertAlphaValue: -1
-  AssertBetaValue: 1
-  AssertCEqualsD: True
-  AssertSizeGreaterThan: {}
-  AssertSizeLessThan: {}
   AssertSizeEqual: {3: 512}
   AssertSizeMultiple: {0: 128, 1: 128}
 
@@ -69,8 +63,8 @@ amdhsa.version:
   - 1
   - 0
 amdhsa.kernels:
-  - .name: AtomicCTest
-    .symbol: 'AtomicCTest.kd'
+  - .name: TestKernel
+    .symbol: 'TestKernel.kd'
     .language:                   OpenCL C
     .language_version:
       - 2
@@ -232,7 +226,7 @@ amdhsa.kernels:
     .wavefront_size:             64
 ...
 .end_amdgpu_metadata
-AtomicCTest:
+TestKernel:
 
 /******************************************/
 /* Asm syntax workarounds                 */

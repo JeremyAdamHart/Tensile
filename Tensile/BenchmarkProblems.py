@@ -34,16 +34,16 @@ from . import ClientExecutable
 from . import SolutionLibrary
 from . import LibraryIO
 from . import Utils
-from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
+from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations, checkForValidParameters
 from .ClientWriter import runClient, writeClientParameters, writeClientConfig
 from .Common import globalParameters, HR, pushWorkingPath, popWorkingPath, print1, print2, printExit, printWarning, ensurePath, \
-                    startTime, defaultBenchmarkCommonParameters
+                    startTime, defaultBenchmarkCommonParameters, validParameters
 from .KernelWriterAssembly import KernelWriterAssembly
 from .KernelWriterSource import KernelWriterSource
 from .SolutionStructs import Solution, ProblemType, ProblemSizes
 from .SolutionWriter import SolutionWriter
 from .TensileCreateLibrary import writeSolutionsAndKernels, writeCMake, buildObjectFileNames
-from . import ReplacementKernels
+from .CustomKernels import isCustomKernelConfig, getCustomKernelConfig
 
 ############################################################################
 # generateForkedSolutions
@@ -102,6 +102,15 @@ def generateForkedSolutions (problemType, hardcodedParameters, benchmarkPermutat
           print1("rejecting solution %s" % str(solutionObject))
 
   return solutions
+
+def generateCustomKernelSolution(kernelName, directory=globalParameters["CustomKernelDirectory"]):
+    kernelConfig = getCustomKernelConfig(kernelName, directory)
+    checkForValidParameters({p: [kernelConfig[p]] for p in kernelConfig if p != "ProblemType"}, set(validParameters.keys()))
+    # test if problem type matches with configuration file
+    kernelConfig["KernelLanguage"] = "Assembly"   # replacement kernels are always assembly kernels?
+    kernelConfig["CustomKernelName"] = kernelName
+
+    return Solution(kernelConfig)
 
 ################################################################################
 # Benchmark Problem Type
@@ -261,21 +270,21 @@ def benchmarkProblemType( problemTypeConfig, problemSizeGroupConfig, \
       customKernelList = [fname[:-2] for fname in os.listdir(globalParameters["CustomKernelDirectory"]) if fname.endswith(".s")]
       customKernelWildcard = True
     for kernelName in customKernelList:
-      kernelConfig = ReplacementKernels.getCustomKernelConfig(kernelName+".s")
-      # test if problem type matches with configuration file
-      kernelConfig["KernelLanguage"] = "Assembly"   # replacement kernels are always assembly kernels?
-      kernelConfig["CustomKernelName"] = kernelName
-      customSolution = Solution(kernelConfig)
+      print1("# Processing custom kernel {}".format(kernelName))
+      customSolution = generateCustomKernelSolution(kernelName)
       if customSolution["ProblemType"] != benchmarkProcess.problemType:
+        # Raise error if this kernel was specifically requested and problem type doesn't match
         if not customKernelWildcard:
-          missingParams = [p for p in benchmarkProcess.problemType if p not in customSolution["ProblemType"]] 
-          extraParams   = [p for p in customSolution["ProblemType"] if p not in benchmarkProcess.problemType] 
+          missingParams = [p for p in benchmarkProcess.problemType if p not in customSolution["ProblemType"]]
+          extraParams   = [p for p in customSolution["ProblemType"] if p not in benchmarkProcess.problemType]
           msg  = "The problem type in the config file does not match that of the custom kernel, {0}.".format(kernelName)
           msg += "\nMissing config parameters:\n" + str(missingParams)
           msg += "\nExtra custom kernel parameters:\n" + str(extraParams)
           raise RuntimeError(msg)
+        else:
+          print1("# Rejected {}: Problem Type doesn't match".format(kernelName))
       else:
-        print1("# Including custom kernel {}".format(kernelName))
+        print1("# Added {} to solutions".format(kernelName))
         maxPossibleSolutions += 1
         if customSolution["Valid"]:
           solutions.append([customSolution])
@@ -350,7 +359,7 @@ def benchmarkProblemType( problemTypeConfig, problemSizeGroupConfig, \
 
     if removesExist:
       if "CustomKernels" not in problemSizeGroupConfig:
-        print1("# Updating winners since kernelwriter removed unused hardcoded solutions.  removeHardcoded=%u winners=%u" 
+        print1("# Updating winners since kernelwriter removed unused hardcoded solutions.  removeHardcoded=%u winners=%u"
                %(len(removeHardcoded), len(winners.winners)))
         winners.wpdUpdate( benchmarkStep.hardcodedParameters )
       numHardcoded = len(benchmarkStep.hardcodedParameters )
@@ -911,7 +920,7 @@ def main( config ):
           shutil.copy( granularityFileName, newGranularityFileName )
       else:
         print1("# %s_%02u already benchmarked; skipping." % (str(problemTypeObj), problemSizeGroupIdx) )
-  
+
   popWorkingPath()
 
   if globalParameters["ExitOnFails"] and totalTestFails:
